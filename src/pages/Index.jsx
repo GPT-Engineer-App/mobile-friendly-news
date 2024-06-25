@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Box, Container, VStack, Text, Link, Input, IconButton, useColorMode, useColorModeValue } from "@chakra-ui/react";
 import { FaSun, FaMoon, FaExternalLinkAlt } from 'react-icons/fa';
 
@@ -10,26 +11,26 @@ const Index = () => {
   const textColor = useColorModeValue("gray.800", "white");
 
   const fetchTopThaiStories = async () => {
-    // Mock API call to fetch top 5 Thai news stories
-    return [
-      { id: 1, title: 'ข่าวไทย 1', score: 100, url: 'https://example.com/1' },
-      { id: 2, title: 'ข่าวไทย 2', score: 200, url: 'https://example.com/2' },
-      { id: 3, title: 'ข่าวไทย 3', score: 300, url: 'https://example.com/3' },
-      { id: 4, title: 'ข่าวไทย 4', score: 400, url: 'https://example.com/4' },
-      { id: 5, title: 'ข่าวไทย 5', score: 500, url: 'https://example.com/5' },
-    ];
+    try {
+      const response = await axios.get('https://api.example.com/top-thai-news');
+      return response.data.stories;
+    } catch (error) {
+      console.error('Error fetching Thai news stories:', error);
+      return [];
+    }
   };
 
-  const translateToEnglish = async (thaiText) => {
-    // Mock translation function
-    const translations = {
-      'ข่าวไทย 1': 'Thai News 1',
-      'ข่าวไทย 2': 'Thai News 2',
-      'ข่าวไทย 3': 'Thai News 3',
-      'ข่าวไทย 4': 'Thai News 4',
-      'ข่าวไทย 5': 'Thai News 5',
-    };
-    return translations[thaiText] || thaiText;
+  const translateWithGPT4 = async (thaiText) => {
+    try {
+      const response = await axios.post('https://api.example.com/translate', {
+        text: thaiText,
+        targetLanguage: 'en'
+      });
+      return response.data.translatedText;
+    } catch (error) {
+      console.error('Error translating text:', error);
+      return thaiText;
+    }
   };
 
   useEffect(() => {
@@ -39,7 +40,7 @@ const Index = () => {
         const translatedStories = await Promise.all(
           thaiStories.map(async (story) => ({
             ...story,
-            translatedTitle: await translateToEnglish(story.title),
+            translatedTitle: await translateWithGPT4(story.title),
           }))
         );
         setStories(translatedStories);
@@ -78,6 +79,7 @@ const Index = () => {
               <Text fontSize="xl" fontWeight="semibold">{story.title}</Text>
               <Text fontSize="md" color="gray.500">{story.translatedTitle}</Text>
               <Text mt={2}>Upvotes: {story.score}</Text>
+              <Text mt={2}>Reads: {story.reads}</Text>
               <Link href={story.url} isExternal color="blue.500" mt={2} display="inline-flex" alignItems="center">
                 Read more <FaExternalLinkAlt size="0.8em" style={{ marginLeft: '4px' }} />
               </Link>
